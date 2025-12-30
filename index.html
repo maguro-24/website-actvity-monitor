@@ -3,16 +3,87 @@
 <head>
   <meta charset="UTF-8">
   <title>Website Monitor Demo</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #eee;
+    }
+    
+    button {
+      padding: 12px 24px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    
+    button:hover {
+      background: #5568d3;
+    }
+    
+    #logoutBtn {
+      background: #dc3545;
+    }
+    
+    #logoutBtn:hover {
+      background: #c82333;
+    }
+    
+    .status {
+      margin-top: 20px;
+      padding: 12px;
+      background: #e7f3ff;
+      border-left: 4px solid #2196F3;
+      border-radius: 4px;
+    }
+  </style>
 </head>
 <body>
-  <h1>Website Activity Monitor Demo</h1>
+  <div class="header">
+    <h1>Website Activity Monitor Demo</h1>
+    <button id="logoutBtn">Logout</button>
+  </div>
+  
+  <p>Welcome! Your activity is being tracked.</p>
   <button id="clickBtn">Click me!</button>
+  
+  <div class="status">
+    <strong>Status:</strong> <span id="statusText">Initializing...</span>
+  </div>
 
   <script>
-    // --- CONFIG ---
     const backendUrl = "http://127.0.0.1:8000/track";
-    const accessToken = "eyJhbGciOiJFUzI1NiIsImtpZCI6IjExMDdlMWE4LWNmOTgtNDEzNC1iMDBlLTZjOTUyYmI3ZmM4MSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2Nja2l1emV2ZHl6aG1pcmh5Z3BvLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI4OGIxMmFlNS1iNDRmLTRmODUtODZhYy0yYWRhOGQ4ZjQ5NGIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzY3MDc5MzM3LCJpYXQiOjE3NjcwNzU3MzcsImVtYWlsIjoidmluY2VudGNoYW4zMDIwQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZW1haWwiLCJwcm92aWRlcnMiOlsiZW1haWwiXX0sInVzZXJfbWV0YWRhdGEiOnsiZW1haWwiOiJ2aW5jZW50Y2hhbjMwMjBAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInBob25lX3ZlcmlmaWVkIjpmYWxzZSwic3ViIjoiODhiMTJhZTUtYjQ0Zi00Zjg1LTg2YWMtMmFkYThkOGY0OTRiIn0sInJvbGUiOiJhdXRoZW50aWNhdGVkIiwiYWFsIjoiYWFsMSIsImFtciI6W3sibWV0aG9kIjoicGFzc3dvcmQiLCJ0aW1lc3RhbXAiOjE3NjcwNzU3Mzd9XSwic2Vzc2lvbl9pZCI6ImFkNTM2NjY1LWE3N2UtNGNjNC1hY2ViLWJkZTI5NTRlM2RjYyIsImlzX2Fub255bW91cyI6ZmFsc2V9.UFRSW4dVCwFbvvyB8EYJHaSW1ClHtRrMtdUFvn0olSBR3HHO8jmb41eCaNXMwsznkluSWuVY4VXvvscaDe8ilg";
-
+    
+    // Get token from localStorage
+    const accessToken = localStorage.getItem('access_token');
+    
+    // Redirect to login if no token
+    if (!accessToken) {
+      window.location.href = 'login.html';
+    }
+    
+    document.getElementById('statusText').textContent = 'Connected and tracking';
+    
+    // Logout handler
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('access_token');
+      window.location.href = 'login.html';
+    });
+    
     // Helper function to send events
     function sendEvent(eventType, metadata = {}) {
       fetch(backendUrl, {
@@ -27,27 +98,32 @@
           metadata: metadata
         })
       })
-      .then(res => res.json())
-      .then(data => console.log("Event sent:", data))
-      .catch(err => console.error("Error sending event:", err));
+      .then(async res => {
+        if (res.status === 401) {
+          // Token expired or invalid
+          localStorage.removeItem('access_token');
+          window.location.href = 'login.html';
+          return;
+        }
+        const data = await res.json();
+        console.log("Event sent:", data);
+      })
+      .catch(err => {
+        console.error("Error sending event:", err);
+        document.getElementById('statusText').textContent = 'Error: ' + err.message;
+      });
     }
 
-    // --- Track page view on load ---
+    // Track page view on load
     window.addEventListener("DOMContentLoaded", () => {
       sendEvent("page_view", { title: document.title });
     });
 
-    // --- Track button clicks ---
+    // Track button clicks
     document.getElementById("clickBtn").addEventListener("click", () => {
       sendEvent("click", { element_id: "clickBtn" });
     });
 
-    // --- Track all clicks globally (optional) ---
-    document.addEventListener("click", (e) => {
-      if (e.target.id !== "clickBtn") {
-        sendEvent("click", { element_tag: e.target.tagName, element_id: e.target.id || null });
-      }
-    });
   </script>
 </body>
 </html>
