@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Website Monitor Demo</title>
+</head>
+<body>
+  <h1>Website Activity Monitor Demo</h1>
+  <button id="clickBtn">Click me!</button>
+
+  <script>
+    // --- CONFIG ---
+    const backendUrl = "http://127.0.0.1:8000/track";
+    const accessToken = "eyJhbGciOiJFUzI1NiIsImtpZCI6IjExMDdlMWE4LWNmOTgtNDEzNC1iMDBlLTZjOTUyYmI3ZmM4MSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2Nja2l1emV2ZHl6aG1pcmh5Z3BvLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI4OGIxMmFlNS1iNDRmLTRmODUtODZhYy0yYWRhOGQ4ZjQ5NGIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzY3MDc5MzM3LCJpYXQiOjE3NjcwNzU3MzcsImVtYWlsIjoidmluY2VudGNoYW4zMDIwQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZW1haWwiLCJwcm92aWRlcnMiOlsiZW1haWwiXX0sInVzZXJfbWV0YWRhdGEiOnsiZW1haWwiOiJ2aW5jZW50Y2hhbjMwMjBAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInBob25lX3ZlcmlmaWVkIjpmYWxzZSwic3ViIjoiODhiMTJhZTUtYjQ0Zi00Zjg1LTg2YWMtMmFkYThkOGY0OTRiIn0sInJvbGUiOiJhdXRoZW50aWNhdGVkIiwiYWFsIjoiYWFsMSIsImFtciI6W3sibWV0aG9kIjoicGFzc3dvcmQiLCJ0aW1lc3RhbXAiOjE3NjcwNzU3Mzd9XSwic2Vzc2lvbl9pZCI6ImFkNTM2NjY1LWE3N2UtNGNjNC1hY2ViLWJkZTI5NTRlM2RjYyIsImlzX2Fub255bW91cyI6ZmFsc2V9.UFRSW4dVCwFbvvyB8EYJHaSW1ClHtRrMtdUFvn0olSBR3HHO8jmb41eCaNXMwsznkluSWuVY4VXvvscaDe8ilg";
+
+    // Helper function to send events
+    function sendEvent(eventType, metadata = {}) {
+      fetch(backendUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({
+          event_type: eventType,
+          page_url: window.location.pathname,
+          metadata: metadata
+        })
+      })
+      .then(res => res.json())
+      .then(data => console.log("Event sent:", data))
+      .catch(err => console.error("Error sending event:", err));
+    }
+
+    // --- Track page view on load ---
+    window.addEventListener("DOMContentLoaded", () => {
+      sendEvent("page_view", { title: document.title });
+    });
+
+    // --- Track button clicks ---
+    document.getElementById("clickBtn").addEventListener("click", () => {
+      sendEvent("click", { element_id: "clickBtn" });
+    });
+
+    // --- Track all clicks globally (optional) ---
+    document.addEventListener("click", (e) => {
+      if (e.target.id !== "clickBtn") {
+        sendEvent("click", { element_tag: e.target.tagName, element_id: e.target.id || null });
+      }
+    });
+  </script>
+</body>
+</html>
