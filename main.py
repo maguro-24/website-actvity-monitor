@@ -113,3 +113,33 @@ def track_event(event: Event, user_id: str = Depends(verify_token)):
     supabase.table("web_log").insert(data).execute()
     return {"status": "ok"}
 
+'''
+
+
+
+
+--------------------------------------
+curls (for testing)
+--------------------------------------
+
+sign-up
+----------
+curl -X POST http://127.0.0.1:8000/signup \-H "Content-Type: application/json" \-d '{"email":"youremail@gmail.com","password":"password123"}'
+
+expected outcome
+-----------------
+  "status": "ok",
+  "access_token": "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+
+login
+------
+curl -X POST http://127.0.0.1:8000/login \-H "Content-Type: application/json" \-d '{"email":"youremail@gmail.com","password":"password123"}'
+
+expected outcome
+-----------------
+  "status": "ok",
+  "access_token": "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+
+'''
